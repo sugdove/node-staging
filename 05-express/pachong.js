@@ -69,6 +69,7 @@ const saveData = async (page_size, totalPage, type, model) => {
 
       insertData = await getDetails(insertData, type)
 
+      // await insertOrUpdate(insertData, page, page_size, type, model)
       await model.insertMany(insertData)
         .then(res => {
           writePage(page + 1, type)
@@ -84,6 +85,29 @@ const saveData = async (page_size, totalPage, type, model) => {
     throw new Error(err)
   }
 }
+
+// 
+const insertOrUpdate = async (arr, page, page_size, type, model) => {
+  try {
+    for(let i= 0; i< arr.length; i++ ) {
+      console.log('1')
+      model.findOneAndUpdate({id:arr[i].id}, {$set: arr[i]}, {upsert:true, 'new':true}, (err, doc) => {
+        if(err){
+          writePage(page, type)
+          return Promise.reject('爬取失败：async终止运行')
+        }
+        else{
+          console.log(`爬取:${(page - 2) * page_size + 1 + index}条数据成功`)
+        }
+      })
+    }
+    writePage(page + 1, type)
+  }
+  catch(err){
+    throw new Error(err)
+  }
+}
+
 // 当为 Users情况下时需再请求obj.url获取对象
 const getDetails = async (dataList, type) => {
   if (type !== 'Users') return dataList

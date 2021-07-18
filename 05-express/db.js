@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var DB_URL = 'mongodb://localhost:27017/github';
 
 /* 链接 */
-mongoose.connect(DB_URL);
+mongoose.connect(DB_URL, { useNewUrlParser: true ,useUnifiedTopology: true});
 
 /* 链接成功 */
 mongoose.connection.on('connected', function() {
