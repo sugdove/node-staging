@@ -5,6 +5,8 @@ const { Repositories, Users } = require('./models.js')
 
 const fs = require('fs')
 
+const languageList = require('./languageList.js')
+
 // 同步读取 page
 let startpageObj = JSON.parse(fs.readFileSync('./page.json'))
 
@@ -21,11 +23,15 @@ const writePage = (page, type) => {
   })
 }
 
-const getDataFromAxios = (page, page_size, type, url = '') => {
+const getDataFromAxios = (page, page_size, type, url = '', language) => {
+  let obj = {}
   if (!url) {
     switch (type) {
       case 'Repositories':
         url = `https://api.github.com/search/repositories?q=stars:>0&page=${page}&per_page=${page_size}`
+        break;
+      case 'language':
+        url = `https://api.github.com/search/repositories?q=${language}&page=${page}&per_page=${page_size}`
         break;
       case 'Users':
         url = `https://api.github.com/search/users?q=followers:>0&page=${page}&per_page=${page_size}`
@@ -35,10 +41,12 @@ const getDataFromAxios = (page, page_size, type, url = '') => {
         break;
     }
   }
-
-  return axios.get(
+  return axios({
     url,
-    { headers: { Authorization: 'token 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' } }
+    method: 'get',
+    params: obj,
+    headers: { Authorization: 'token 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' }
+  }
   )
 }
 /*
@@ -47,6 +55,7 @@ const getDataFromAxios = (page, page_size, type, url = '') => {
  */
 const saveData = async (page_size, totalPage, type, model) => {
   let startpage = startpageObj[type]
+  console.log(startpage)
   // let total_count = await getDataFromAxios(1, 1).then(res => {
   //   // console.log(res.data)
   //   return res.data.total_count
@@ -56,30 +65,50 @@ const saveData = async (page_size, totalPage, type, model) => {
   // let total_page = Math.ceil(total_count / page_size)
   // console.log(`总页数为:${total_page}`)
   try {
-    for (let page = startpage; page <= totalPage; page++) {
-      let insertData = await getDataFromAxios(page, page_size, type)
-        .then(res => {
-          console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
-          console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
-          return res.data.items
-        })
-        .catch(err => {
-          return Promise.reject('axios调用报错：async终止运行')
-        })
+    if (type === 'language') {
+      for (let i = 0; i < languageList.length; i++) {
+        startpage = startpageObj[languageList[i]]
+        for (let page = startpage; page <= totalPage; page++) {
+          let insertData = await getDataFromAxios(page, page_size, type, '', languageList[i])
+            .then(res => {
+              writePage(page + 1, languageList[i])
+              console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
+              console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
+              return res.data.items
+            })
+            .catch(err => {
+              writePage(page + 1, languageList[i])
+              return Promise.reject('axios调用报错：async终止运行:' + err)
+            })
 
-      insertData = await getDetails(insertData, type)
+          insertData = await getDetails(insertData, languageList[i])
 
-      // await insertOrUpdate(insertData, page, page_size, type, model)
-      await model.insertMany(insertData)
-        .then(res => {
-          writePage(page + 1, type)
-          console.log(`爬取:${(page - 1) * page_size + 1}条 到  ${page * page_size}条数据成功`)
-        })
-        .catch(err => {
-          writePage(page, type)
-          return Promise.reject('爬取失败：async终止运行')
-        })
+          await insertOrUpdate(insertData, page, page_size, languageList[i], model)
+
+        }
+      }
     }
+    else {
+      for (let page = startpage; page <= totalPage; page++) {
+        let insertData = await getDataFromAxios(page, page_size, type)
+          .then(res => {
+            writePage(page + 1, type)
+            console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
+            console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
+            return res.data.items
+          })
+          .catch(err => {
+            writePage(page + 1, type)
+            return Promise.reject('axios调用报错：async终止运行:' + err)
+          })
+
+        insertData = await getDetails(insertData, type)
+
+        await insertOrUpdate(insertData, page, page_size, type, model)
+
+      }
+    }
+
   }
   catch (err) {
     throw new Error(err)
@@ -89,21 +118,19 @@ const saveData = async (page_size, totalPage, type, model) => {
 // 
 const insertOrUpdate = async (arr, page, page_size, type, model) => {
   try {
-    for(let i= 0; i< arr.length; i++ ) {
-      console.log('1')
-      model.findOneAndUpdate({id:arr[i].id}, {$set: arr[i]}, {upsert:true, 'new':true}, (err, doc) => {
-        if(err){
+    for (let i = 0; i < arr.length; i++) {
+      model.findOneAndUpdate({ id: arr[i].id }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
+        if (err) {
           writePage(page, type)
           return Promise.reject('爬取失败：async终止运行')
         }
-        else{
-          console.log(`爬取:${(page - 2) * page_size + 1 + index}条数据成功`)
+        else {
+          console.log(`爬取:${(page - 1) * page_size + 1 + i}条数据成功`)
         }
       })
     }
-    writePage(page + 1, type)
   }
-  catch(err){
+  catch (err) {
     throw new Error(err)
   }
 }
@@ -125,9 +152,25 @@ const getDetails = async (dataList, type) => {
 }
 // 主入口
 const main = () => {
-    // saveData此处如果试做promise则 不会执行里面的函数
-    saveData(50, 20, 'Repositories', Repositories)
-    // saveData(50, 20, 'Users', Users)
+  // saveData此处如果试做promise则 不会执行里面的函数
+  // saveData(50, 20, 'Repositories', Repositories).then(res=>{
+  // }).catch(err=>{console.log(err)})
+  saveData(50, 20, 'language', Repositories).then(res => {
+  }).catch(err => { console.log(err) })
+  // saveData(50, 20, 'Users', Users)
 }
 
 main()
+
+
+
+
+ // await model.insertMany(insertData)
+        //   .then(res => {
+        //     writePage(page + 1, type)
+        //     console.log(`爬取:${(page - 1) * page_size + 1}条 到  ${page * page_size}条数据成功`)
+        //   })
+        //   .catch(err => {
+        //     writePage(page, type)
+        //     return Promise.reject('爬取失败：async终止运行')
+        //   })
