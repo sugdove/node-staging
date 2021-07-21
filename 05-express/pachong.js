@@ -176,16 +176,3 @@ main().then(res => {
 }).catch(err => {
   console.log('爬虫程序执行失败: ' + err)
 })
-
-
-
-
- // await model.insertMany(insertData)
-        //   .then(res => {
-        //     writePage(page + 1, type)
-        //     console.log(`爬取:${(page - 1) * page_size + 1}条 到  ${page * page_size}条数据成功`)
-        //   })
-        //   .catch(err => {
-        //     writePage(page, type)
-        //     return Promise.reject('爬取失败：async终止运行')
-        //   })

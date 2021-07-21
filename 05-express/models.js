@@ -146,7 +146,19 @@ let userSchema = mongoose.Schema({
   "updated_at": String
 })
 
+let blogSchema = mongoose.Schema({
+  id: String,
+  title: String,
+  avatarurl: String,
+  user_url: String,
+  nickname: String,
+  desc: String,
+  digg: String,
+  views: String,
+  comments: String,
+})
 module.exports = {
   Repositories: mongoose.model('Repositories', projectSchema),
   Users: mongoose.model('Users', userSchema),
+  Blogs: mongoose.model('Blogs', blogSchema),
 }
