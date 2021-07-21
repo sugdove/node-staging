@@ -24,30 +24,33 @@ const writePage = (page, type) => {
 }
 
 const getDataFromAxios = (page, page_size, type, url = '', language) => {
-  let obj = {}
+  let q = ''
   if (!url) {
     switch (type) {
       case 'Repositories':
-        url = `https://api.github.com/search/repositories?q=stars:>0&page=${page}&per_page=${page_size}`
+        q = 'stars:>0'
+        url = `https://api.github.com/search/repositories`
         break;
       case 'language':
-        url = `https://api.github.com/search/repositories?q=${language}&page=${page}&per_page=${page_size}`
+        q = language
+        url = `https://api.github.com/search/repositories`
         break;
       case 'Users':
-        url = `https://api.github.com/search/users?q=followers:>0&page=${page}&per_page=${page_size}`
+        q = 'followers:>0'
+        url = `https://api.github.com/search/users`
         break;
       default:
-        url = `https://api.github.com/search/repositories?q=stars:>0&page=${page}&per_page=${page_size}`
+        q = 'q=stars:>0'
+        url = `https://api.github.com/search/repositories`
         break;
     }
   }
   return axios({
     url,
     method: 'get',
-    params: obj,
-    headers: { Authorization: 'token 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' }
-  }
-  )
+    params: { q, page, per_page: page_size },
+    headers: { Authorization: 'token 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' }
+  })
 }
 /*
  *  @params page_size
@@ -80,8 +83,6 @@ const saveData = async (page_size, totalPage, type, model) => {
               writePage(page + 1, languageList[i])
               return Promise.reject('axios调用报错：async终止运行:' + err)
             })
-
-          insertData = await getDetails(insertData, languageList[i])
 
           await insertOrUpdate(insertData, page, page_size, languageList[i], model)
 
@@ -151,16 +152,30 @@ const getDetails = async (dataList, type) => {
   }
 }
 // 主入口
-const main = () => {
+const main = async () => {
   // saveData此处如果试做promise则 不会执行里面的函数
-  // saveData(50, 20, 'Repositories', Repositories).then(res=>{
-  // }).catch(err=>{console.log(err)})
-  saveData(50, 20, 'language', Repositories).then(res => {
-  }).catch(err => { console.log(err) })
-  // saveData(50, 20, 'Users', Users)
+
+  try {
+    // await saveData(50, 20, 'Repositories', Repositories).then(res=>{
+    console.log('Repositories爬取成功')
+    // }).catch(err=> Promise.reject(err))
+    await saveData(50, 20, 'language', Repositories).then(res => {
+      console.log('language爬取成功')
+    }).catch(err => Promise.reject(err))
+    await saveData(50, 20, 'Users', Users).then(res => {
+      console.log('Users爬取成功')
+    }).catch(err => Promise.reject(err))
+  }
+  catch (err) {
+    throw new Error(err)
+  }
 }
 
-main()
+main().then(res => {
+  console.log('爬虫程序全部执行成功')
+}).catch(err => {
+  console.log('爬虫程序执行失败: ' + err)
+})
 
 
 
