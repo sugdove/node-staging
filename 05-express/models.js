@@ -147,15 +147,13 @@ let userSchema = mongoose.Schema({
 })
 
 let blogSchema = mongoose.Schema({
-  id: String,
+  description: String,
+  link: String,
+  postTime: String,
+  site: String,
+  siteName: String,
   title: String,
-  avatarurl: String,
-  user_url: String,
-  nickname: String,
-  desc: String,
-  digg: String,
-  views: String,
-  comments: String,
+  __typename: String
 })
 module.exports = {
   Repositories: mongoose.model('Repositories', projectSchema),

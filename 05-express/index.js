@@ -1,6 +1,6 @@
 const express = require('express')
 
-const {Repositories, Users} = require('./models.js')
+const {Repositories, Users, Blogs} = require('./models.js')
 
 const app = express()
 // 获取项目
@@ -51,7 +51,27 @@ app.get('/users',(req, res) => {
     }
   })
 })
-
+// 获取blogs
+app.get('/blogs',(req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  const { page = 1, pageSize = 20 } = req.query
+  Blogs.find({})
+  .skip(Number((page - 1) * pageSize))
+  .limit(Number(pageSize))
+  .sort({'postTime': -1})
+  .exec((err, doc) => {
+    if(err){
+      console.log(err)
+    }
+    else{
+      const obj = {
+        status: 200,
+        items: doc,
+      }
+      res.send(obj)
+    }
+  })
+})
 // 跨域设置
 app.all("*", function(req, res, next) {
   res.setHeader("Access-Control-Allow-Credentials", true);
