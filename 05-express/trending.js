@@ -2,53 +2,76 @@ const axios = require("axios");
 
 const { Blogs } = require("./models.js");
 
+const fs = require("fs")
+
 const cheerio = require("cheerio");
-// select-menu-modal position-absolute right-0 class
-
-// axios 获取
-let proxy = {
-  host: '18.162.236.39',
-  port: '7078',
+// .select-menu-item
+const getHtml = (url) => {
+  return axios.get(url).then(res=> Promise.resolve(res.data)).catch(err=> Promise.reject(err))
 }
-axios({
-  method: 'get',
-  url: 'https://github.com/trending',
-  proxy
-}).then(res=>{
-  console.log(2222)
-  console.log(res.data)
-}).catch(err => {
-  console.error(err)
-})
-// // 同步读取 page
-// const getDataFromAxios = (page, page_size, type) => {
-//   let url
-//   switch (type) {
-//     case 'Blogs':
-//       url = `https://www.githubs.cn/api/graphql`
-//       // url = `https://blog.csdn.net/api/articles?type=more&category=home&shown_offset=${Date.now()}`
-//       break;
-//     default:
-//       url = `https://www.githubs.cn/api/graphql`
-//       break;
-//   }
-//   return axios({
-//     url,
-//     method: 'post',
-//     data:{
-//       query: "query FeedListPaginationQuery(\n  $count: Int!\n  $cursor: String\n) {\n  ...FeedList_query_1G22uz\n}\n\nfragment FeedList_query_1G22uz on Query {\n  feed(after: $cursor, first: $count) {\n    edges {\n      node {\n        link\n        title\n        siteName\n        site\n        postTime\n        description\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n",
-//       variables: {count: 2, cursor: page * page_size}
-//     }
-
-//   })
-// }
-// function sleep(ms) {
-//   return new Promise(resolve=>setTimeout(resolve, ms))
-// }
-// /*
-//  *  @params page_size
-//  *
-//  */
+const saveData = async(url) => {
+  try{
+    let html = await getHtml(url ? url : `https://github.com/trending`)
+    console.log(html)
+    const $ = cheerio.load(html)
+    getDataFromDom($)
+    // if( !url ) {
+    //   $('.select-menu-item').each(function(){
+    //     let urlHref = `https://github.com${$(this).attr('href')}`
+    //     saveData(urlHref)
+    //   })
+    // }
+  }
+  catch(err){
+    console.log(`saveData报错${err}`)
+  }
+}
+const getDataFromDom = ($) => {
+  $('.Box-row').each(function(){
+    let full_name,html_url,description,language,stargazers_count,stargazers_count_url,forks_count,forks_count_url,builtBy,star_des
+    full_name = $(this).find('h1').find('a').attr('href')
+    full_name = full_name.substring(1, full_name.length)
+    html_url = `https://github.com/${full_name}`
+    description = $(this).children('p').text().trim()
+    language = $(this).children('.f6').children(':first').text().trim()
+    $(this).children('.f6').children().each(function( index ) {
+      switch (index) {
+        case 0:
+            language = $(this).text().trim()
+          break;
+        case 1:
+            stargazers_count = $(this).text().trim()
+            stargazers_count_url = `https://github.com${$(this).attr('href')}`
+            break;
+        case 2:
+            forks_count = $(this).text().trim()
+            forks_count_url = `https://github.com${$(this).attr('href')}`
+          break;
+        case 3:
+            builtBy = $(this).text().trim()
+          break;
+        case 4:
+            star_des = $(this).text().trim() 
+        default:
+          break;
+      }
+    })
+    const obj = {
+      full_name,
+      html_url,
+      description,
+      language,
+      stargazers_count,
+      stargazers_count_url,
+      forks_count,
+      forks_count_url,
+      star_des,
+      builtBy
+    }
+    console.log(obj)
+  })
+}
+saveData()
 // const saveData = async (page_size, totalPage, type, model) => {
 //   let startpage = startpageObj[type]
 //   try {
