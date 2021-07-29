@@ -1,77 +1,76 @@
 const axios = require("axios");
 
-const { Blogs } = require("./models.js");
-
-const fs = require("fs")
+const { Trendings } = require("./models.js");
 
 const cheerio = require("cheerio");
 // .select-menu-item
-const getHtml = (url) => {
-  return axios.get(url).then(res=> Promise.resolve(res.data)).catch(err=> Promise.reject(err))
-}
-const saveData = async(url) => {
-  try{
-    let html = await getHtml(url ? url : `https://github.com/trending`)
-    console.log(html)
-    const $ = cheerio.load(html)
-    getDataFromDom($)
-    // if( !url ) {
-    //   $('.select-menu-item').each(function(){
-    //     let urlHref = `https://github.com${$(this).attr('href')}`
-    //     saveData(urlHref)
-    //   })
-    // }
+const getHtml = (type) => {
+  return axios
+    .get(`https://github.com/trending?since=${type}`)
+    .then((res) => Promise.resolve(res.data))
+    .catch((err) => Promise.reject(`https://github.com/trending?since=${type} ${err}`));
+};
+
+const saveData = async (type) => {
+  try {
+    let html = await getHtml(type);
+    const $ = cheerio.load(html);
+    getDataFromDom($, type);
+  } catch (err) {
+    console.log(`saveData报错${err}`);
+  }
+};
+const getDataFromDom = ($, type) => {
+  $(".Box-row").each(async function () {
+    let full_name, star_count;
+    full_name = $(this).find("h1").find("a").attr("href");
+    full_name = full_name.substring(1, full_name.length);
+    star_count = parseInt(
+      $(this)
+      .find(".f6")
+      .children(".d-inline-block.float-sm-right")
+      .text()
+      .trim()
+    );
+    const obj = {
+      date_id: new Date().toLocaleDateString(),
+      star_count,
+      type,
+    };
+    console.log(obj);
+    const respository = await getRepository(full_name);
+    const result = { ...obj, ...respository };
+    await insertOrUpdate(result, Trendings);
+  });
+};
+
+const getRepository = (full_name) => {
+  return axios
+    .get(`https://api.github.com/repos/${full_name}`, {
+      headers: {
+        Authorization: "token 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",
+      },
+    })
+    .then((res) => Promise.resolve(res.data))
+    .catch((err) => Promise.reject(err));
+};
+//
+const main = async () => {
+  try {
+    const arr = ["daily", "weekly", "monthly"];
+     for (let i = 0; i < arr.length; i++) {
+     await saveData(arr[i]);
+    }
   }
   catch(err){
-    console.log(`saveData报错${err}`)
+    throw err
   }
-}
-const getDataFromDom = ($) => {
-  $('.Box-row').each(function(){
-    let full_name,html_url,description,language,stargazers_count,stargazers_count_url,forks_count,forks_count_url,builtBy,star_des
-    full_name = $(this).find('h1').find('a').attr('href')
-    full_name = full_name.substring(1, full_name.length)
-    html_url = `https://github.com/${full_name}`
-    description = $(this).children('p').text().trim()
-    language = $(this).children('.f6').children(':first').text().trim()
-    $(this).children('.f6').children().each(function( index ) {
-      switch (index) {
-        case 0:
-            language = $(this).text().trim()
-          break;
-        case 1:
-            stargazers_count = $(this).text().trim()
-            stargazers_count_url = `https://github.com${$(this).attr('href')}`
-            break;
-        case 2:
-            forks_count = $(this).text().trim()
-            forks_count_url = `https://github.com${$(this).attr('href')}`
-          break;
-        case 3:
-            builtBy = $(this).text().trim()
-          break;
-        case 4:
-            star_des = $(this).text().trim() 
-        default:
-          break;
-      }
-    })
-    const obj = {
-      full_name,
-      html_url,
-      description,
-      language,
-      stargazers_count,
-      stargazers_count_url,
-      forks_count,
-      forks_count_url,
-      star_des,
-      builtBy
-    }
-    console.log(obj)
-  })
-}
-saveData()
+  
+};
+
+main()
+.then(res=>{console.log('爬取完毕!')})
+.catch(err => {console.log('爬取失败:'+ err)})
 // const saveData = async (page_size, totalPage, type, model) => {
 //   let startpage = startpageObj[type]
 //   try {
@@ -95,25 +94,25 @@ saveData()
 //     throw new Error(err)
 //   }
 // }
-
-// //
-// const insertOrUpdate = async (arr, page, page_size, type, model) => {
-//   try {
-//     for (let i = 0; i < arr.length; i++) {
-//       model.findOneAndUpdate({ link: arr[i].link }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
-//         if (err) {
-//           return Promise.reject('爬取失败：async终止运行')
-//         }
-//         else {
-//           console.log(`爬取:${(page - 1) * page_size + 1 + i}条数据成功`)
-//         }
-//       })
-//     }
-//   }
-//   catch (err) {
-//     throw new Error(err)
-//   }
-// }
+//
+const insertOrUpdate = async (data, model) => {
+  try {
+    model.findOneAndUpdate(
+      { date_id: data.date_id, id: data.id, type: data.type },
+      { $set: data },
+      { upsert: true, new: true },
+      (err, doc) => {
+        if (err) {
+          return Promise.reject("爬取失败：async终止运行");
+        } else {
+          console.log(`爬取数据成功`);
+        }
+      }
+    );
+  } catch (err) {
+    throw new Error(err);
+  }
+};
 
 // // 主入口
 // const main = async () => {

@@ -1,6 +1,14 @@
+/*
+ * @Author: sg
+ * @Date: 2021-07-20 10:20:16
+ * @LastEditTime: 2021-07-28 11:48:48
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \node-staging\05-express\index.js
+ */
 const express = require('express')
 
-const {Repositories, Users, Blogs} = require('./models.js')
+const {Repositories, Users, Blogs, Trendings} = require('./models.js')
 
 const app = express()
 // 获取项目
@@ -27,7 +35,7 @@ app.get('/repositories',(req, res) => {
     }
   })
 })
-// 获取user
+// 获取users
 app.get('/users',(req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const { page = 1, pageSize = 20 } = req.query
@@ -72,16 +80,27 @@ app.get('/blogs',(req, res) => {
     }
   })
 })
-// 跨域设置
-app.all("*", function(req, res, next) {
-  res.setHeader("Access-Control-Allow-Credentials", true);
+// 获取trendings
+app.get('/trendings',(req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
-  res.setHeader("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
-  res.setHeader("Content-Type", "application/json;charset=utf-8");
-  next();
-});
-
+  const { page = 1, pageSize = 10, type = 'daily' } = req.query
+  Trendings.find({ type })
+  .skip(Number((page - 1) * pageSize))
+  .limit(Number(pageSize))
+  .sort({'postTime': -1})
+  .exec((err, doc) => {
+    if(err){
+      console.log(err)
+    }
+    else{
+      const obj = {
+        status: 200,
+        items: doc,
+      }
+      res.send(obj)
+    }
+  })
+})
 app.listen('8081', ()=>{
   console.log('服务已经启动在8081')
 })
