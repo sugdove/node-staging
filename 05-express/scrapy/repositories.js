@@ -1,20 +1,20 @@
 // const mongodbClient = require('mongodb').mongodbClient
 const axios = require('axios')
 
-const { Repositories, Users } = require('./models.js')
+const { Repositories, Users } = require("../models/models");
 
 const fs = require('fs')
 
-const languageList = require('./languageList.js')
+const languageList = require('./record/languageList.js')
 
 // 同步读取 page
-let startpageObj = JSON.parse(fs.readFileSync('./page.json'))
+let startpageObj = JSON.parse(fs.readFileSync('./record/page.json'))
 
 // 写入page
 const writePage = (page, type) => {
   console.log('开始写入')
   startpageObj[type] = page
-  fs.writeFile('./page.json', JSON.stringify(startpageObj), (err, data) => {
+  fs.writeFile('./record/page.json', JSON.stringify(startpageObj), (err, data) => {
     if (err) {
       console.error(err)
       return
@@ -49,7 +49,7 @@ const getDataFromAxios = (page, page_size, type, url = '', language) => {
     url,
     method: 'get',
     params: { q, page, per_page: page_size },
-    headers: { Authorization: 'token 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' }
+    headers: { Authorization: 'token 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' }
   })
 }
 /*
@@ -156,9 +156,9 @@ const main = async () => {
   // saveData此处如果试做promise则 不会执行里面的函数
 
   try {
-    // await saveData(50, 20, 'Repositories', Repositories).then(res=>{
+    await saveData(50, 20, 'Repositories', Repositories).then(res=>{
     console.log('Repositories爬取成功')
-    // }).catch(err=> Promise.reject(err))
+    }).catch(err=> Promise.reject(err))
     await saveData(50, 20, 'language', Repositories).then(res => {
       console.log('language爬取成功')
     }).catch(err => Promise.reject(err))

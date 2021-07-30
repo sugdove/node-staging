@@ -1,17 +1,17 @@
 const axios = require('axios')
 
-const { Blogs } = require('./models.js')
+const { Blogs } = require('../models/models.js')
 
 const fs = require('fs')
 
 // 同步读取 page
-let startpageObj = JSON.parse(fs.readFileSync('./page.json'))
+let startpageObj = JSON.parse(fs.readFileSync('./record/page.json'))
 
 // 写入page
 const writePage = (page, type) => {
   console.log('开始写入')
   startpageObj[type] = page
-  fs.writeFile('./page.json', JSON.stringify(startpageObj), (err, data) => {
+  fs.writeFile('./record/page.json', JSON.stringify(startpageObj), (err, data) => {
     if (err) {
       console.error(err)
       return
@@ -40,9 +40,6 @@ const getDataFromAxios = (page, page_size, type) => {
     }
     
   })
-}
-function sleep(ms) {
-  return new Promise(resolve=>setTimeout(resolve, ms))
 }
 /*
  *  @params page_size

@@ -1,14 +1,6 @@
-/*
- * @Author: sg
- * @Date: 2021-07-20 10:20:16
- * @LastEditTime: 2021-07-28 11:48:48
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \node-staging\05-express\index.js
- */
 const express = require('express')
 
-const {Repositories, Users, Blogs, Trendings} = require('./models.js')
+const {Repositories, Users, Blogs, Trendings} = require('../models/models.js')
 
 const app = express()
 // 获取项目
