@@ -49,7 +49,7 @@ const getDataFromAxios = (page, page_size, type, url = '', language) => {
     url,
     method: 'get',
     params: { q, page, per_page: page_size },
-    headers: { Authorization: 'token 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' }
+    // headers: { Authorization: 'token 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' }
   })
 }
 /*
