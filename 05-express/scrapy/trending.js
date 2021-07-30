@@ -48,7 +48,7 @@ const getRepository = (full_name) => {
   return axios
     .get(`https://api.github.com/repos/${full_name}`, {
       headers: {
-        Authorization: "token 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",
+        Authorization: "token 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 ",
       },
     })
     .then((res) => Promise.resolve(res.data))
