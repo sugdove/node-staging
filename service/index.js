@@ -117,7 +117,7 @@ app.get("/trendings/history", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { year, count, dateType = "weekly", language = "all" } = req.query;
-    const path = `../../06-archive/archive/${dateType}/${year}/${count}/${language}.csv`
+    const path = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`
     let response = await csv()
       .fromFile(
         path
