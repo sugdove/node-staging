@@ -2,24 +2,6 @@ const axios = require('axios')
 
 const { Blogs } = require('../models/models.js')
 
-const fs = require('fs')
-
-// 同步读取 page
-let startpageObj = JSON.parse(fs.readFileSync('./record/page.json'))
-
-// 写入page
-const writePage = (page, type) => {
-  console.log('开始写入')
-  startpageObj[type] = page
-  fs.writeFile('./record/page.json', JSON.stringify(startpageObj), (err, data) => {
-    if (err) {
-      console.error(err)
-      return
-    }
-    console.log(`${type}集合page写入成功,写入${page}页`)
-  })
-}
-
 const getDataFromAxios = (page, page_size, type) => {
   let url
   switch (type) {
@@ -46,18 +28,15 @@ const getDataFromAxios = (page, page_size, type) => {
  *
  */
 const saveData = async (page_size, totalPage, type, model) => {
-  let startpage = startpageObj[type]
   try {
-      for (let page = startpage; page <= totalPage; page++) {
+      for (let page = 1; page <= totalPage; page++) {
         let insertData = await getDataFromAxios(page, page_size, type)
           .then(res => {
-            writePage(page + 1, type)
             let result = res.data.data.feed.edges.map(el=> el.node )
             console.log(result)
             return result
           })
           .catch(err => {
-            writePage(page + 1, type)
             return Promise.reject('axios调用报错：async终止运行:' + err)
           })
 
@@ -77,7 +56,6 @@ const insertOrUpdate = async (arr, page, page_size, type, model) => {
     for (let i = 0; i < arr.length; i++) {
       model.findOneAndUpdate({ link: arr[i].link }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
         if (err) {
-          writePage(page, type)
           return Promise.reject('爬取失败：async终止运行')
         }
         else {
@@ -92,11 +70,11 @@ const insertOrUpdate = async (arr, page, page_size, type, model) => {
 }
 
 // 主入口
-const main = async () => {
+const scrapy_blogs = async () => {
   // saveData此处如果试做promise则 不会执行里面的函数
 
   try {
-    await saveData(20, 100000, 'Blogs', Blogs).then(res => {
+    await saveData(20, 50, 'Blogs', Blogs).then(res => {
       console.log('Blogs爬取成功')
     }).catch(err => Promise.reject(err))
   }
@@ -105,8 +83,4 @@ const main = async () => {
   }
 }
 
-main().then(res => {
-  console.log('爬虫程序全部执行成功')
-}).catch(err => {
-  console.log('爬虫程序执行失败: ' + err)
-})
+module.exports = scrapy_blogs

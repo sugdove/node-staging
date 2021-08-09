@@ -3,25 +3,9 @@ const axios = require('axios')
 
 const { Repositories, Users } = require("../models/models");
 
-const fs = require('fs')
+const token = require("./record/token")
 
 const languageList = require('./record/languageList.js')
-
-// 同步读取 page
-let startpageObj = JSON.parse(fs.readFileSync('./record/page.json'))
-
-// 写入page
-const writePage = (page, type) => {
-  console.log('开始写入')
-  startpageObj[type] = page
-  fs.writeFile('./record/page.json', JSON.stringify(startpageObj), (err, data) => {
-    if (err) {
-      console.error(err)
-      return
-    }
-    console.log(`${type}集合page写入成功,写入${page}页`)
-  })
-}
 
 const getDataFromAxios = (page, page_size, type, url = '', language) => {
   let q = ''
@@ -49,7 +33,7 @@ const getDataFromAxios = (page, page_size, type, url = '', language) => {
     url,
     method: 'get',
     params: { q, page, per_page: page_size },
-    // headers: { Authorization: 'token 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' }
+    headers: { Authorization: `token ${ token }` }
   })
 }
 /*
@@ -57,30 +41,17 @@ const getDataFromAxios = (page, page_size, type, url = '', language) => {
  *
  */
 const saveData = async (page_size, totalPage, type, model) => {
-  let startpage = startpageObj[type]
-  console.log(startpage)
-  // let total_count = await getDataFromAxios(1, 1).then(res => {
-  //   // console.log(res.data)
-  //   return res.data.total_count
-  // }).catch(err => { console.log('获取项目数量失败') })
-  // if (total_count === undefined) return
-  // console.log(`总项目数为:${total_count}`)
-  // let total_page = Math.ceil(total_count / page_size)
-  // console.log(`总页数为:${total_page}`)
   try {
     if (type === 'language') {
       for (let i = 0; i < languageList.length; i++) {
-        startpage = startpageObj[languageList[i]]
-        for (let page = startpage; page <= totalPage; page++) {
+        for (let page = 1; page <= totalPage; page++) {
           let insertData = await getDataFromAxios(page, page_size, type, '', languageList[i])
             .then(res => {
-              writePage(page + 1, languageList[i])
               console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
               console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
               return res.data.items
             })
             .catch(err => {
-              writePage(page + 1, languageList[i])
               return Promise.reject('axios调用报错：async终止运行:' + err)
             })
 
@@ -90,16 +61,14 @@ const saveData = async (page_size, totalPage, type, model) => {
       }
     }
     else {
-      for (let page = startpage; page <= totalPage; page++) {
+      for (let page = 1; page <= totalPage; page++) {
         let insertData = await getDataFromAxios(page, page_size, type)
           .then(res => {
-            writePage(page + 1, type)
             console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
             console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
             return res.data.items
           })
           .catch(err => {
-            writePage(page + 1, type)
             return Promise.reject('axios调用报错：async终止运行:' + err)
           })
 
@@ -122,7 +91,6 @@ const insertOrUpdate = async (arr, page, page_size, type, model) => {
     for (let i = 0; i < arr.length; i++) {
       model.findOneAndUpdate({ id: arr[i].id }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
         if (err) {
-          writePage(page, type)
           return Promise.reject('爬取失败：async终止运行')
         }
         else {
@@ -152,17 +120,17 @@ const getDetails = async (dataList, type) => {
   }
 }
 // 主入口
-const main = async () => {
+const scrapy_respositories = async () => {
   // saveData此处如果试做promise则 不会执行里面的函数
 
   try {
-    await saveData(50, 20, 'Repositories', Repositories).then(res=>{
+    await saveData(100, 10, 'Repositories', Repositories).then(res=>{
     console.log('Repositories爬取成功')
     }).catch(err=> Promise.reject(err))
-    await saveData(50, 20, 'language', Repositories).then(res => {
+    await saveData(100, 10, 'language', Repositories).then(res => {
       console.log('language爬取成功')
     }).catch(err => Promise.reject(err))
-    await saveData(50, 20, 'Users', Users).then(res => {
+    await saveData(100, 10, 'Users', Users).then(res => {
       console.log('Users爬取成功')
     }).catch(err => Promise.reject(err))
   }
@@ -171,8 +139,4 @@ const main = async () => {
   }
 }
 
-main().then(res => {
-  console.log('爬虫程序全部执行成功')
-}).catch(err => {
-  console.log('爬虫程序执行失败: ' + err)
-})
+module.exports = scrapy_respositories

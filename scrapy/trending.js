@@ -2,6 +2,7 @@ const axios = require("axios");
 
 const { Trendings } = require("../models/models");
 
+const token = require("./record/token")
 const cheerio = require("cheerio");
 // .select-menu-item
 const getHtml = (type) => {
@@ -47,33 +48,13 @@ const getDataFromDom = ($, type) => {
 const getRepository = (full_name) => {
   return axios
     .get(`https://api.github.com/repos/${full_name}`,
-    //  {
-    //   headers: {
-    //     Authorization: "token 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",
-    //   },
-    // }
+     {headers: {Authorization: `token ${ token }`}
+    }
     )
     .then((res) => Promise.resolve(res.data))
     .catch((err) => Promise.reject(err));
 };
 //
-const main = async () => {
-  try {
-    const arr = ["daily", "weekly", "monthly"];
-     for (let i = 0; i < arr.length; i++) {
-     await saveData(arr[i]);
-    }
-  }
-  catch(err){
-    throw err
-  }
-  
-};
-
-main()
-.then(res=>{console.log('爬取完毕!')})
-.catch(err => {console.log('爬取失败:'+ err)})
-
 const insertOrUpdate = async (data, model) => {
   try {
     model.findOneAndUpdate(
@@ -92,3 +73,18 @@ const insertOrUpdate = async (data, model) => {
     throw new Error(err);
   }
 };
+
+const scrapy_tendings = async () => {
+  try {
+    const arr = ["daily", "weekly", "monthly"];
+     for (let i = 0; i < arr.length; i++) {
+     await saveData(arr[i]);
+    }
+  }
+  catch(err){
+    throw err
+  }
+  
+};
+
+module.exports = scrapy_tendings

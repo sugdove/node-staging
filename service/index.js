@@ -1,98 +1,143 @@
-const express = require('express')
+const express = require("express");
 
-const {Repositories, Users, Blogs, Trendings} = require('../models/models.js')
+const csv = require("csvtojson");
 
-const app = express()
+const {
+  Repositories,
+  Users,
+  Blogs,
+  Trendings,
+} = require("../models/models.js");
+
+const app = express();
 // 获取项目
-app.get('/repositories',(req, res) => {
+app.get("/repositories", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const { page = 1, pageSize = 20, language= 'all' } = req.query
+  const { page = 1, pageSize = 20, language = "all" } = req.query;
   // 此处需要处理C++ ++字符不出现问题
   // console.log(type === 'all' ? {} : { language: type })
-  Repositories.find(language === 'all' ? {} : { language })
-  .skip(Number((page - 1) * pageSize))
-  .limit(Number(pageSize))
-  .sort({'stargazers_count': -1})
-  .exec((err, doc) => {
-    if(err){
-      console.log(err)
-    }
-    else{
-      const obj = {
-        status: 200,
-        items: doc,
-        total_count:1000
+  Repositories.find(language === "all" ? {} : { language })
+    .skip(Number((page - 1) * pageSize))
+    .limit(Number(pageSize))
+    .sort({ stargazers_count: -1 })
+    .exec((err, doc) => {
+      if (err) {
+        const obj = {
+          status: 500,
+          message: err.message,
+        };
+        res.send(obj);
+      } else {
+        const obj = {
+          status: 200,
+          items: doc,
+          total_count: 1000,
+        };
+        res.send(obj);
       }
-      res.send(obj)
-    }
-  })
-})
+    });
+});
 // 获取users
-app.get('/users',(req, res) => {
+app.get("/users", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const { page = 1, pageSize = 20 } = req.query
+  const { page = 1, pageSize = 20 } = req.query;
   // 此处需要处理C++ ++字符不出现问题
   // console.log(type === 'all' ? {} : { language: type })
   Users.find({})
-  .skip(Number((page - 1) * pageSize))
-  .limit(Number(pageSize))
-  .sort({'followers': -1})
-  .exec((err, doc) => {
-    if(err){
-      console.log(err)
-    }
-    else{
-      const obj = {
-        status: 200,
-        items: doc,
-        total_count:1000
+    .skip(Number((page - 1) * pageSize))
+    .limit(Number(pageSize))
+    .sort({ followers: -1 })
+    .exec((err, doc) => {
+      if (err) {
+        const obj = {
+          status: 500,
+          message: err.message,
+        };
+        res.send(obj);
+      } else {
+        const obj = {
+          status: 200,
+          items: doc,
+          total_count: 1000,
+        };
+        res.send(obj);
       }
-      res.send(obj)
-    }
-  })
-})
+    });
+});
 // 获取blogs
-app.get('/blogs',(req, res) => {
+app.get("/blogs", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const { page = 1, pageSize = 20 } = req.query
+  const { page = 1, pageSize = 20 } = req.query;
   Blogs.find({})
-  .skip(Number((page - 1) * pageSize))
-  .limit(Number(pageSize))
-  .sort({'postTime': -1})
-  .exec((err, doc) => {
-    if(err){
-      console.log(err)
-    }
-    else{
-      const obj = {
-        status: 200,
-        items: doc,
+    .skip(Number((page - 1) * pageSize))
+    .limit(Number(pageSize))
+    .sort({ postTime: -1 })
+    .exec((err, doc) => {
+      if (err) {
+        const obj = {
+          status: 500,
+          message: err.message,
+        };
+        res.send(obj);
+      } else {
+        const obj = {
+          status: 200,
+          items: doc,
+        };
+        res.send(obj);
       }
-      res.send(obj)
-    }
-  })
-})
+    });
+});
 // 获取trendings
-app.get('/trendings',(req, res) => {
+app.get("/trendings", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const { page = 1, pageSize = 10, type = 'daily' } = req.query
+  const { page = 1, pageSize = 10, type = "daily" } = req.query;
   Trendings.find({ type })
-  .skip(Number((page - 1) * pageSize))
-  .limit(Number(pageSize))
-  .sort({'postTime': -1})
-  .exec((err, doc) => {
-    if(err){
-      console.log(err)
-    }
-    else{
-      const obj = {
-        status: 200,
-        items: doc,
+    .skip(Number((page - 1) * pageSize))
+    .limit(Number(pageSize))
+    .sort({ postTime: -1 })
+    .exec((err, doc) => {
+      if (err) {
+        const obj = {
+          status: 500,
+          message: err.message,
+        };
+        res.send(obj);
+      } else {
+        const obj = {
+          status: 200,
+          items: doc,
+        };
+        res.send(obj);
       }
-      res.send(obj)
-    }
-  })
-})
-app.listen('8081', ()=>{
-  console.log('服务已经启动在8081')
-})
+    });
+});
+// 获取趋势周报和
+app.get("/trendings/history", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    const { year, count, dateType = "weekly", language = "all" } = req.query;
+    const path = `../../06-archive/archive/${dateType}/${year}/${count}/${language}.csv`
+    let response = await csv()
+      .fromFile(
+        path
+      )
+      .then((json) => json)
+      .catch((err) => Promise.reject(err));
+    const obj = {
+      status: 200,
+      items: response,
+    };
+    res.send(obj);
+  } catch (err) {
+    const obj = {
+      status: 500,
+      message: err.message,
+    };
+    res.send(obj);
+  }
+});
+
+app.listen("8081", () => {
+  console.log("服务已经启动在8081");
+});
