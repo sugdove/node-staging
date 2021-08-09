@@ -1,5 +1,7 @@
 const express = require("express");
 
+const path = require("path")
+
 const csv = require("csvtojson");
 
 const {
@@ -117,10 +119,11 @@ app.get("/trendings/history", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { year, count, dateType = "weekly", language = "all" } = req.query;
-    const path = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`
+    const relPath = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`
+    console.log(relPath)
     let response = await csv()
       .fromFile(
-        path
+        path.join(__dirname, relPath)
       )
       .then((json) => json)
       .catch((err) => Promise.reject(err));
