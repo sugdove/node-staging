@@ -83,7 +83,6 @@ const saveData = async (page_size, totalPage, type, model) => {
 
         insertData = await getDetails(insertData, type);
 
-        console.log(insertData,'insertData')
         insertOrUpdate(insertData, page, page_size, type, model);
       }
     }
