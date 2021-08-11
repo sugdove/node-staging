@@ -5,6 +5,7 @@ const { getRepository } = require("./scrapy/trending");
 const path = require('path')
 
 const path_url = "../github-trending/archive/monthly";
+const path_url2 = "../github-trending/archive/daily/2021/08";
 
 const readDir = async(path) => {
   let dirList = fs.readdirSync(path)
@@ -57,7 +58,7 @@ const changeCSV = async (relPath) => {
   }
 };
 
-readDir(path_url);
+readDir(path_url2);
 // csv()
 //       .fromFile(path.join(__dirname, "../github-trending/archive/weekly/2021/00/all.csv"))
 //       .then((json) => {console.log(json)})
