@@ -69,9 +69,12 @@ const saveData = async (page_size, totalPage, type, model) => {
         let insertData = await getDataFromAxios(page, page_size, type)
           .then((res) => {
             console.log(
-              `x-ratelimit-limit: ${res.headers["x-ratelimit-limit"]}\n
-               x-ratelimit-remaining: ${res.headers["x-ratelimit-remaining"]}`
+              `x-ratelimit-limit: ${res.headers["x-ratelimit-limit"]}`
             );
+            console.log(
+              `x-ratelimit-remaining: ${res.headers["x-ratelimit-remaining"]}`
+            );
+            return res.data.items;
           })
           .catch((err) => {
             // return Promise.reject()
@@ -80,6 +83,7 @@ const saveData = async (page_size, totalPage, type, model) => {
 
         insertData = await getDetails(insertData, type);
 
+        console.log(insertData,'insertData')
         insertOrUpdate(insertData, page, page_size, type, model);
       }
     }
