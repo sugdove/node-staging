@@ -1,142 +1,151 @@
 // const mongodbClient = require('mongodb').mongodbClient
-const axios = require('axios')
+const axios = require("../axios");
 
 const { Repositories, Users } = require("../models/models");
 
-const token = require("./record/token")
+const token = require("./record/token");
 
-const languageList = require('./record/languageList.js')
+const languageList = require("./record/languageList.js");
 
-const getDataFromAxios = (page, page_size, type, url = '', language) => {
-  let q = ''
+const getDataFromAxios = (page, page_size, type, url = "", language) => {
+  let q = "";
   if (!url) {
     switch (type) {
-      case 'Repositories':
-        q = 'stars:>0'
-        url = `https://api.github.com/search/repositories`
+      case "Repositories":
+        q = "stars:>0";
+        url = `https://api.github.com/search/repositories`;
         break;
-      case 'language':
-        q = language
-        url = `https://api.github.com/search/repositories`
+      case "language":
+        q = language;
+        url = `https://api.github.com/search/repositories`;
         break;
-      case 'Users':
-        q = 'followers:>0'
-        url = `https://api.github.com/search/users`
+      case "Users":
+        q = "followers:>0";
+        url = `https://api.github.com/search/users`;
         break;
       default:
-        q = 'q=stars:>0'
-        url = `https://api.github.com/search/repositories`
+        q = "q=stars:>0";
+        url = `https://api.github.com/search/repositories`;
         break;
     }
   }
   return axios({
     url,
-    method: 'get',
+    method: "get",
     params: { q, page, per_page: page_size },
-    headers: { Authorization: `token ${ token }` }
-  })
-}
+    headers: { Authorization: `token ${token}` },
+  });
+};
 /*
  *  @params page_size
  *
  */
 const saveData = async (page_size, totalPage, type, model) => {
   try {
-    if (type === 'language') {
+    if (type === "language") {
       for (let i = 0; i < languageList.length; i++) {
         for (let page = 1; page <= totalPage; page++) {
-          let insertData = await getDataFromAxios(page, page_size, type, '', languageList[i])
-            .then(res => {
-              console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
-              console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
-              return res.data.items
-            })
-            .catch(err => {
-              return Promise.reject('axios调用报错：async终止运行:' + err)
-            })
+          let insertData = await getDataFromAxios(
+            page,
+            page_size,
+            type,
+            "",
+            languageList[i]
+          ).then((res) => {
+            console.log(
+              `x-ratelimit-limit: ${res.headers["x-ratelimit-limit"]}`
+            );
+            console.log(
+              `x-ratelimit-remaining: ${res.headers["x-ratelimit-remaining"]}`
+            );
+            return res.data.items;
+          });
 
-          await insertOrUpdate(insertData, page, page_size, languageList[i], model)
-
+          insertOrUpdate(insertData, page, page_size, languageList[i], model);
         }
       }
-    }
-    else {
+    } else {
       for (let page = 1; page <= totalPage; page++) {
         let insertData = await getDataFromAxios(page, page_size, type)
-          .then(res => {
-            console.log(`x-ratelimit-limit: ${res.headers['x-ratelimit-limit']}`)
-            console.log(`x-ratelimit-remaining: ${res.headers['x-ratelimit-remaining']}`)
-            return res.data.items
+          .then((res) => {
+            console.log(
+              `x-ratelimit-limit: ${res.headers["x-ratelimit-limit"]}\n
+               x-ratelimit-remaining: ${res.headers["x-ratelimit-remaining"]}`
+            );
           })
-          .catch(err => {
-            return Promise.reject('axios调用报错：async终止运行:' + err)
-          })
+          .catch((err) => {
+            // return Promise.reject()
+            console.log("axios调用报错:" + err);
+          });
 
-        insertData = await getDetails(insertData, type)
+        insertData = await getDetails(insertData, type);
 
-        await insertOrUpdate(insertData, page, page_size, type, model)
-
+        insertOrUpdate(insertData, page, page_size, type, model);
       }
     }
-
+  } catch (err) {
+    throw new Error(err);
   }
-  catch (err) {
-    throw new Error(err)
-  }
-}
+};
 
-// 
-const insertOrUpdate = async (arr, page, page_size, type, model) => {
-  try {
-    for (let i = 0; i < arr.length; i++) {
-      model.findOneAndUpdate({ id: arr[i].id }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
+//
+const insertOrUpdate = (arr, page, page_size, type, model) => {
+  if(arr === undefined) return
+  for (let i = 0; i < arr.length; i++) {
+    model.findOneAndUpdate(
+      { id: arr[i].id },
+      { $set: arr[i] },
+      { upsert: true, new: true },
+      (err, doc) => {
         if (err) {
-          return Promise.reject('爬取失败：async终止运行')
+          console.log("数据库更新出错:" + err.message);
+        } else {
+          console.log(`爬取${type}:${(page - 1) * page_size + 1 + i}条数据成功`);
         }
-        else {
-          console.log(`爬取:${(page - 1) * page_size + 1 + i}条数据成功`)
-        }
-      })
-    }
+      }
+    );
   }
-  catch (err) {
-    throw new Error(err)
-  }
-}
+};
 
 // 当为 Users情况下时需再请求obj.url获取对象
 const getDetails = async (dataList, type) => {
-  if (type !== 'Users') return dataList
-  const arr = []
+  if(dataList === undefined) return []; 
+  if (type !== "Users") return dataList;
+  const arr = [];
   try {
     for (let i = 0; i < dataList.length; i++) {
-      let data = await getDataFromAxios(1, 1, 'Users', dataList[i]['url']).then(res => res.data)
-      arr.push(data)
+      let data = await getDataFromAxios(1, 1, "Users", dataList[i]["url"]).then(res => res.data)
+      arr.push(data);
     }
-    return arr
+    return arr;
+  } catch (err) {
+    console.log(err);
   }
-  catch (err) {
-    console.log(err)
-  }
-}
+};
 // 主入口
 const scrapy_respositories = async () => {
-  // saveData此处如果试做promise则 不会执行里面的函数
+  // saveData此处如果试做promise则 不会执行里面的函数 
+  await saveData(100, 10, "Repositories", Repositories)
+    .then(() => {
+      console.log("Repositories爬取成功");
+    })
+    .catch((err) => {
+      console.log("Repositories爬取失败" + err);
+    });
+  await saveData(100, 10, "language", Repositories)
+    .then(() => {
+      console.log("language爬取成功");
+    })
+    .catch((err) => {
+      console.log("language爬取失败" + err);
+    });
+  await saveData(100, 10, "Users", Users)
+    .then(() => {
+      console.log("Users爬取成功");
+    })
+    .catch((err) => {
+      console.log("Users爬取失败" + err);
+    });
+};
 
-  try {
-    await saveData(100, 10, 'Repositories', Repositories).then(res=>{
-    console.log('Repositories爬取成功')
-    }).catch(err=> Promise.reject(err))
-    await saveData(100, 10, 'language', Repositories).then(res => {
-      console.log('language爬取成功')
-    }).catch(err => Promise.reject(err))
-    await saveData(100, 10, 'Users', Users).then(res => {
-      console.log('Users爬取成功')
-    }).catch(err => Promise.reject(err))
-  }
-  catch (err) {
-    throw new Error(err)
-  }
-}
-
-module.exports = scrapy_respositories
+module.exports = scrapy_respositories;

@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../axios");
 
 const { Trendings } = require("../models/models");
 
@@ -8,8 +8,8 @@ const cheerio = require("cheerio");
 const getHtml = (type) => {
   return axios
     .get(`https://github.com/trending?since=${type}`)
-    .then((res) => Promise.resolve(res.data))
-    .catch((err) => Promise.reject(`https://github.com/trending?since=${type} ${err}`));
+    .then((res) => res.data)
+    .catch((err) => console.log(`抓取html地址:https://github.com/trending?since=${type}出错: ${err}`));
 };
 
 const saveData = async (type) => {
@@ -38,43 +38,47 @@ const getDataFromDom = ($, type) => {
       star_count,
       type,
     };
-    console.log(obj);
+    // console.log(obj);
     const respository = await getRepository(full_name);
     const result = { ...obj, ...respository };
-    await insertOrUpdate(result, Trendings);
+    insertOrUpdate(result, Trendings);
   });
 };
 
 const getRepository = (full_name) => {
-  return axios
-    .get(`https://api.github.com/repos/${full_name}`,
-     {headers: {Authorization: `token ${ token }`}
-    }
-    )
-    .then((res) => Promise.resolve(res.data))
-    .catch((err) => Promise.reject(err));
+  return axios({
+    method: 'get',
+    url: `https://api.github.com/repos/${full_name}`,
+    headers: { Authorization: `token ${token}` }
+  })
+    .then((res) => {
+      console.log(
+        `x-ratelimit-limit: ${res.headers["x-ratelimit-limit"]}\n
+         x-ratelimit-remaining: ${res.headers["x-ratelimit-remaining"]}`
+      );
+      return Promise.resolve(res.data)
+    })
+    .catch((err) => {
+      console.log(`获取单个项目报错: ${err.message}, url为: https://api.github.com/repos/${full_name}`)
+    });
 };
 //
-const insertOrUpdate = async (data, model) => {
-  try {
+const insertOrUpdate = (data, model) => {
     model.findOneAndUpdate(
       { date_id: data.date_id, id: data.id, type: data.type },
       { $set: data },
       { upsert: true, new: true },
       (err, doc) => {
         if (err) {
-          return Promise.reject("爬取失败：async终止运行");
+          console.log(`数据库更新失败:${err.message}`)
         } else {
-          console.log(`爬取数据成功`);
+          console.log(`trendings 爬取数据成功`);
         }
       }
     );
-  } catch (err) {
-    throw new Error(err);
-  }
 };
 
-const scrapy_tendings = async () => {
+const scrapy_trendings = async () => {
   try {
     const arr = ["daily", "weekly", "monthly"];
      for (let i = 0; i < arr.length; i++) {
@@ -87,4 +91,8 @@ const scrapy_tendings = async () => {
   
 };
 
-module.exports = scrapy_tendings
+module.exports = 
+{
+  getRepository,
+  scrapy_trendings
+}

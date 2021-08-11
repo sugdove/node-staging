@@ -1,9 +1,10 @@
 const express = require("express");
 
-const path = require("path")
+const path = require("path");
 
 const csv = require("csvtojson");
 
+const { getRepository } = require("../scrapy/trending");
 const {
   Repositories,
   Users,
@@ -114,22 +115,28 @@ app.get("/trendings", (req, res) => {
       }
     });
 });
-// 获取趋势周报和
+// 获取趋势
 app.get("/trendings/history", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { year, count, dateType = "weekly", language = "all" } = req.query;
-    const relPath = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`
-    console.log(relPath)
+    const relPath = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`;
+    console.log(relPath);
     let response = await csv()
-      .fromFile(
-        path.join(__dirname, relPath)
-      )
+      .fromFile(path.join(__dirname, relPath))
       .then((json) => json)
-      .catch((err) => Promise.reject(err));
+      .catch((err) => console.log(`csv读取失败:${err.message}`));
+    console.log(response)
+    const newArr = []
+    response.forEach(el => {
+      if(el.owner!==undefined){
+        el.owner = JSON.parse(el.owner)
+        newArr.push(el)
+      }
+    })
     const obj = {
       status: 200,
-      items: response,
+      items: newArr
     };
     res.send(obj);
   } catch (err) {

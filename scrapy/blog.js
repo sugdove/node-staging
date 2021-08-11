@@ -1,4 +1,4 @@
-const axios = require('axios')
+const axios = require('../axios')
 
 const { Blogs } = require('../models/models.js')
 
@@ -33,14 +33,15 @@ const saveData = async (page_size, totalPage, type, model) => {
         let insertData = await getDataFromAxios(page, page_size, type)
           .then(res => {
             let result = res.data.data.feed.edges.map(el=> el.node )
-            console.log(result)
+            // console.log(result)
             return result
           })
           .catch(err => {
-            return Promise.reject('axios调用报错：async终止运行:' + err)
+            // return Promise.reject('axios调用报错：async终止运行:' + err)
+            console.log('axios调用报错：'+ err.message)
           })
 
-        await insertOrUpdate(insertData, page, page_size, type, model)
+        insertOrUpdate(insertData, page, page_size, type, model)
 
       }
 
@@ -51,36 +52,28 @@ const saveData = async (page_size, totalPage, type, model) => {
 }
 
 // 
-const insertOrUpdate = async (arr, page, page_size, type, model) => {
-  try {
+const insertOrUpdate =  (arr, page, page_size, type, model) => {
+    if(arr === undefined) return
     for (let i = 0; i < arr.length; i++) {
       model.findOneAndUpdate({ link: arr[i].link }, { $set: arr[i] }, { upsert: true, 'new': true }, (err, doc) => {
         if (err) {
-          return Promise.reject('爬取失败：async终止运行')
+          console.log('数据库更新出错' + err.message)
         }
         else {
-          console.log(`爬取:${(page - 1) * page_size + 1 + i}条数据成功`)
+          console.log(`爬取blogs:${(page - 1) * page_size + 1 + i}条数据成功`)
         }
       })
     }
-  }
-  catch (err) {
-    throw new Error(err)
-  }
 }
 
 // 主入口
-const scrapy_blogs = async () => {
+const scrapy_blogs = () => {
   // saveData此处如果试做promise则 不会执行里面的函数
-
-  try {
-    await saveData(20, 50, 'Blogs', Blogs).then(res => {
-      console.log('Blogs爬取成功')
-    }).catch(err => Promise.reject(err))
-  }
-  catch (err) {
-    throw new Error(err)
-  }
+  saveData(20, 50, 'Blogs', Blogs).then(res => {
+    console.log('Blogs爬取成功')
+  }).catch(err => {
+    console.log('Blogs爬取失败' + err.message)
+  })
 }
 
 module.exports = scrapy_blogs
