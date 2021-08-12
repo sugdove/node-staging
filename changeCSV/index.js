@@ -6,7 +6,7 @@ const path = require("path");
 const changeList = require("./changeList");
 // const path_url = "../../github-trending/archive/monthly";
 // const path_url2 = `../../github-trending/archive/daily/${year}/${month.toString().padStart(2,'0')}`;
-const path_url2 = `../../github-trending/archive/daily/2019/11`;
+const path_url2 = `../../github-trending/archive/daily/2020`;
 
 const readDir = async (path_) => {
   let dirList = fs.readdirSync(path.join(__dirname, path_));
@@ -42,7 +42,6 @@ const changeCSV = async (relPath) => {
       newArr.push({ ...response[i], ...repository });
     }
 
-    fs.writeFileSync('./test.txt',JSON.stringify(newArr))
     const csvFields = Object.keys(newArr[0]);
 
     const json2csvParser = new Json2csvParser({ csvFields });
