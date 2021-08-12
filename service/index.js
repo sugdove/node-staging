@@ -126,7 +126,6 @@ app.get("/trendings/history", async (req, res) => {
       .fromFile(path.join(__dirname, relPath))
       .then((json) => json)
       .catch((err) => console.log(`csv读取失败:${err.message}`));
-    console.log(response)
     const newArr = []
     response.forEach(el => {
       if(el.owner!==undefined){

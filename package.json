@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "scrapy": "node ./scrapy/index.js",
-    "service": "node ./service/index.js",
+    "scrapy": "node ./scrapy",
+    "service": "node ./service",
     "changeCSV": "node ./changeCSV"
   },
   "author": "",
