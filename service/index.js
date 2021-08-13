@@ -4,7 +4,6 @@ const path = require("path");
 
 const csv = require("csvtojson");
 
-const { getRepository } = require("../scrapy/trending");
 const {
   Repositories,
   Users,
@@ -130,8 +129,8 @@ app.get("/trendings/history", async (req, res) => {
     response.forEach(el => {
       if(el.owner!==undefined){
         el.owner = JSON.parse(el.owner)
-        newArr.push(el)
       }
+      newArr.push(el)
     })
     const obj = {
       status: 200,
@@ -142,6 +141,7 @@ app.get("/trendings/history", async (req, res) => {
     const obj = {
       status: 500,
       message: err.message,
+      items: []
     };
     res.send(obj);
   }
