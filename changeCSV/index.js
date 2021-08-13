@@ -4,7 +4,7 @@ const Json2csvParser = require("json2csv").Parser;
 const { getRepository } = require("../scrapy/trending");
 const path = require("path");
 const changeList = require("./changeList");
-const path_url = "../../github-trending/archive/monthly";
+const path_url = "../../github-trending/archive/weekly/2020";
 // const path_url2 = `../../github-trending/archive/daily/${year}/${month.toString().padStart(2,'0')}`;
 const path_url2 = `../../github-trending/archive/daily/2020`;
 
