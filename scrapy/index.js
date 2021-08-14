@@ -6,9 +6,9 @@ const {
 
 const main = async () => {
   try {
-    await scrapy_repositories();
     await scrapy_blogs();
     await scrapy_trendings();
+    await scrapy_repositories();
     console.log('爬虫结束！')
   } catch (err) {
     console.log(`出错：${err.message}`);
