@@ -13,7 +13,7 @@ const {
 
 const app = express();
 // 获取项目
-app.get("/repositories", (req, res) => {
+app.get("/api/repositories", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const { page = 1, pageSize = 20, language = "all" } = req.query;
   // 此处需要处理C++ ++字符不出现问题
@@ -40,7 +40,7 @@ app.get("/repositories", (req, res) => {
     });
 });
 // 获取users
-app.get("/users", (req, res) => {
+app.get("/api/users", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const { page = 1, pageSize = 20 } = req.query;
   // 此处需要处理C++ ++字符不出现问题
@@ -67,7 +67,7 @@ app.get("/users", (req, res) => {
     });
 });
 // 获取blogs
-app.get("/blogs", (req, res) => {
+app.get("/api/blogs", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const { page = 1, pageSize = 20 } = req.query;
   Blogs.find({})
@@ -91,7 +91,7 @@ app.get("/blogs", (req, res) => {
     });
 });
 // 获取trendings
-app.get("/trendings", (req, res) => {
+app.get("/api/trendings", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const { page = 1, pageSize = 10, type = "daily" } = req.query;
   Trendings.find({ type })
@@ -115,7 +115,7 @@ app.get("/trendings", (req, res) => {
     });
 });
 // 获取趋势
-app.get("/trendings/history", async (req, res) => {
+app.get("/api/trendings/history", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { year, count, dateType = "weekly", language = "all" } = req.query;
