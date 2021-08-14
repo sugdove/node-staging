@@ -15,8 +15,8 @@ const main = async () => {
   }
 };
 
-// 每隔三个小时跑一次
-const TIMEOUT = 60000 * 60 * 3;
+// 每隔24小时跑一次
+const TIMEOUT = 60000 * 60 * 24;
 
 main()
 
