@@ -9,7 +9,7 @@ const {
   Users,
   Blogs,
   Trendings,
-} = require("../models/models.js");
+} = require("../models/models2.js");
 
 const app = express();
 // 获取项目
