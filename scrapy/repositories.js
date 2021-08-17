@@ -128,6 +128,13 @@ const getDetails = async (dataList, type) => {
 // 主入口
 const scrapy_respositories = async () => {
   // saveData此处如果试做promise则 不会执行里面的函数 
+  await saveData(100, 10, "Users", Users)
+    .then(() => {
+      console.log("Users爬取成功");
+    })
+    .catch((err) => {
+      console.log("Users爬取失败" + err);
+    });
   await saveData(100, 10, "Repositories", Repositories)
     .then(() => {
       console.log("Repositories爬取成功");
@@ -141,13 +148,6 @@ const scrapy_respositories = async () => {
     })
     .catch((err) => {
       console.log("language爬取失败" + err);
-    });
-  await saveData(100, 10, "Users", Users)
-    .then(() => {
-      console.log("Users爬取成功");
-    })
-    .catch((err) => {
-      console.log("Users爬取失败" + err);
     });
 };
 

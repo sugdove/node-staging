@@ -20,8 +20,28 @@ const getDataFromAxios = (page, page_size, type) => {
       query: "query FeedListPaginationQuery(\n  $count: Int!\n  $cursor: String\n) {\n  ...FeedList_query_1G22uz\n}\n\nfragment FeedList_query_1G22uz on Query {\n  feed(after: $cursor, first: $count) {\n    edges {\n      node {\n        link\n        title\n        siteName\n        site\n        postTime\n        description\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n",
       variables: {count: 2, cursor: page * page_size}
     }
-    
   })
+}
+
+const getFirstPage = async() => {
+  let insertData = await axios({
+    url: 'https://www.githubs.cn/api/graphql',
+    method: 'post',
+    data:{
+      query: "query feedQuery {\n  ...FeedList_query\n}\n\nfragment FeedList_query on Query {\n  feed(after: \"0\", first: 20) {\n    edges {\n      node {\n        link\n        title\n        siteName\n        site\n        postTime\n        description\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n",
+      variables: {}
+    }
+  }).then(res => {
+    let result = res.data.data.feed.edges.map(el=> el.node )
+    // console.log(result)
+    return result
+  })
+  .catch(err => {
+    // return Promise.reject('axios调用报错：async终止运行:' + err)
+    console.log('axios调用报错：'+ err.message)
+  })
+
+  insertOrUpdate(insertData, 0, 0, 0, Blogs)
 }
 /*
  *  @params page_size
@@ -29,6 +49,7 @@ const getDataFromAxios = (page, page_size, type) => {
  */
 const saveData = async (page_size, totalPage, type, model) => {
   try {
+      await getFirstPage()
       for (let page = 1; page <= totalPage; page++) {
         let insertData = await getDataFromAxios(page, page_size, type)
           .then(res => {
