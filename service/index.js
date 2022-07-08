@@ -9,7 +9,7 @@ const { Repositories, Users, Blogs, Trendings } = require('../models/models.js')
 const app = express()
 // 获取项目
 app.get('/api/repositories', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://githubs.club/')
+  // res.setHeader('Access-Control-Allow-Origin', '*')
   const { page = 1, pageSize = 20, language = 'all' } = req.query
   // 此处需要处理C++ ++字符不出现问题
   // console.log(type === 'all' ? {} : { language: type })
@@ -36,7 +36,7 @@ app.get('/api/repositories', (req, res) => {
 })
 // 获取users
 app.get('/api/users', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://githubs.club/')
+  // res.setHeader('Access-Control-Allow-Origin', '*')
   const { page = 1, pageSize = 20 } = req.query
   // 此处需要处理C++ ++字符不出现问题
   // console.log(type === 'all' ? {} : { language: type })
@@ -63,7 +63,7 @@ app.get('/api/users', (req, res) => {
 })
 // 获取blogs
 app.get('/api/blogs', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://githubs.club/')
+  // res.setHeader('Access-Control-Allow-Origin', '*')
   const { page = 1, pageSize = 20 } = req.query
   Blogs.find({})
     .skip(Number((page - 1) * pageSize))
@@ -87,7 +87,7 @@ app.get('/api/blogs', (req, res) => {
 })
 // 获取trendings
 app.get('/api/trendings', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://githubs.club/')
+  // res.setHeader('Access-Control-Allow-Origin', '*')
   const { page = 1, pageSize = 10, type = 'daily' } = req.query
   Trendings.find({ type })
     .skip(Number((page - 1) * pageSize))
@@ -111,7 +111,7 @@ app.get('/api/trendings', (req, res) => {
 })
 // 获取趋势
 app.get('/api/trendings/history', async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://githubs.club/')
+  // res.setHeader('Access-Control-Allow-Origin', '*')
   try {
     const { year, count, dateType = 'weekly', language = 'all' } = req.query
     const relPath = `../../github-trending/archive/${dateType}/${year}/${count}/${language}.csv`

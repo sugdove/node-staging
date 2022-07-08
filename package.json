@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "scrapy": "node ./scrapy",
-    "service": "node ./service",
+    "service": "node ./service --watch",
     "changeCSV": "node ./changeCSV",
     "pull": "node ./pull"
   },
